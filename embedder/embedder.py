@@ -12,7 +12,8 @@ class Embedder:
         Initialize the module.
         :param model_id: id of model on Huggingface
         """
-        self.encoder_model = SentenceTransformer(model_id)
+        self.model_id = model_id
+        self.encoder_model = SentenceTransformer(self.model_id)
 
     def __call__(self, text: str) -> np.ndarray:
         """
