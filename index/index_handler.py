@@ -1,7 +1,6 @@
 from documents import document_handler
 from documents.document_handler import DocumentHandler
 from index.cosine_simialrity import cosine_similarity
-import numpy as np
 
 
 class IndexHandler:
@@ -32,11 +31,14 @@ class IndexHandler:
             vectors=self.embeddings
         )
 
-        # Select the top k similarities indices
-        top_k_indices = np.argsort(similarities)[-num_results:][::-1]
-        similar_texts = [self.texts[ind] for ind in top_k_indices]
+        # Sort the texts by their similarity and extract top k
+        texts_and_similarities = zip(self.texts, similarities)
+        sorted_texts_and_similarities = sorted(texts_and_similarities, key=lambda x: x[0], reverse=True)
+        top_k_results = sorted_texts_and_similarities[:num_results]
+
+        # Process the result
         results = {
-            text: float(similarity) for text, similarity in zip(similar_texts, similarities)
+            text: float(similarity) for text, similarity in top_k_results
         }
         return results
 
