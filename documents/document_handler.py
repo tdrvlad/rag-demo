@@ -2,7 +2,7 @@ import os
 from embedder import embedder_module
 from embedder.embedder import Embedder
 import json
-from typing import List
+from typing import List, Tuple
 from uuid import uuid4
 import numpy as np
 
@@ -47,20 +47,34 @@ class DocumentHandler:
             json.dump(doc_dict, file, ensure_ascii=False, indent=4)
         return True
 
-    def add_doc(self, text: str):
+    def add_doc(self, text: str) -> np.ndarray:
+        """
+        Add document to the cache. Returns the embedding of the text for further usage.
+        :param text: string if the text
+        :return: the embedding vector
+        """
+
+        # Check if document already exists
+        texts, embeddings = self.get_texts_and_embeddings()
+        if text in texts:
+            print('Document already added.')
+            ind = texts.index(text)
+            return embeddings[ind]
+
         doc_id = str(uuid4())
         file_path = os.path.join(self.docs_cache_dir, f"{doc_id}.json")
         embedding = self.embedding_fn(text)
-        embedding = [float(e) for e in embedding]
+        embedding_list = [float(e) for e in embedding]
         # List conversion of the numpy array is necessary in order to save it as a JSON
 
         doc_dict = {
             'file_path': file_path,
             'id': doc_id,
             'text': text,
-            'embedding': embedding
+            'embedding': embedding_list
         }
         self.save_doc(doc_dict)
+        return embedding
 
     def get_docs(self):
         """
@@ -68,6 +82,18 @@ class DocumentHandler:
         :return:  list-of-docs-dict
         """
         return self.docs
+
+    def get_texts_and_embeddings(self) -> Tuple[List[str], List[np.ndarray]]:
+        """
+        Returns the cached texts and embeddings as lists.
+        :return:
+        """
+        texts = []
+        embeddings = []
+        for doc in self.docs:
+            texts.append(doc["text"])
+            embeddings.append(doc["embedding"])
+        return texts, embeddings
 
     def delete_doc(self, text):
         """
