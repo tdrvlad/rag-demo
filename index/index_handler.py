@@ -6,33 +6,28 @@ from index.cosine_simialrity import cosine_similarity
 class IndexHandler:
     def __init__(self, document_handler_module: DocumentHandler = document_handler):
         self.document_handler_module = document_handler_module
-        self.texts, self.embeddings = self.document_handler_module.get_texts_and_embeddings()
         self.embedding_dim = self.document_handler_module.embedding_fn.get_embedding_size()
 
     def add_text(self, text: str):
-        print(f"Adding text <{text}> to index.")
-        embedding = self.document_handler_module.add_doc(text)
-        # This also saves the document in the cache
-
-        # And we also add it in the list to be able to retrieve it
-        self.texts.append(text)
-        self.embeddings.append(embedding)
-        print(f"Index contains {self.embeddings} samples.")
+        # This is just so that it is easier to call
+        self.document_handler_module.add_doc(text)
 
     def search(self, query_text, num_results=3):
         # We don't want to add the text to our cache, we just want to get its embedding in order to search the index
         query_embedding = self.document_handler_module.embedding_fn(query_text)
+
+        texts, embeddings = self.document_handler_module.get_texts_and_embeddings()
 
         if query_embedding.size != self.embedding_dim:
             raise ValueError("Mismatch between embedding sizes")
 
         similarities = cosine_similarity(
             query=query_embedding,
-            vectors=self.embeddings
+            vectors=embeddings
         )
 
         # Sort the texts by their similarity and extract top k
-        texts_and_similarities = zip(self.texts, similarities)
+        texts_and_similarities = zip(texts, similarities)
         sorted_texts_and_similarities = sorted(texts_and_similarities, key=lambda x: x[0], reverse=True)
         top_k_results = sorted_texts_and_similarities[:num_results]
 
